@@ -1,0 +1,442 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src="https://cdn.tailwindcss.com"></script>
+<title>Analisa tidur Ver. 0.0.5</title>
+<link href="./Video Capture Example_files/js_example_style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+<script src="https://cdn.socket.io/socket.io-2.2.0.js" ></script>
+
+
+<style>
+    .center {
+        margin: auto;
+        width: 60%;
+        padding: 10px;
+    }
+    .loader {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .is-hide{
+        display: none;
+    }
+    #myChart {
+        width: 1822px !important;
+        height: 300px !important;
+    }
+    #historyChart {
+        width: 900px !important;
+        height: 300px !important;
+    }
+
+    #table {
+        width: 340px;
+        height: 220px;
+        overflow: auto;
+        border: 1px solid black;
+    }
+    #table td {
+        border-left: 1px solid #000;
+        border-right: 1px solid #000;
+        border-bottom: 1px solid black;
+        border-top: 1px solid black;
+
+    }
+    #table td:first-child {
+        border-left: none;
+    }
+
+    #table td:last-child {
+        border-right: none;
+    }
+    #table th {
+        position: sticky;
+        top: 0px!important;
+        --tw-bg-opacity: 1;
+        background: rgb(243 244 246 / var(--tw-bg-opacity));
+
+    }
+
+    #table thead tr th {
+        /* Don't forget this, required for the stickiness */
+        top: 0;
+    }
+
+    #table tbody tr th {
+        /* Don't forget this, required for the stickiness */
+        top: 1.5em;
+    }
+    
+    /* The Modal (background) */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 100px; /* Location of the box */
+        left: 25%;
+        top: 0;
+        width: 50%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+    }
+
+    /* Modal Content */
+    .modal-content {
+        position: relative;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 0;
+        border: 1px solid #888;
+        width: 80%;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+        -webkit-animation-name: animatetop;
+        -webkit-animation-duration: 0.4s;
+        animation-name: animatetop;
+        animation-duration: 0.4s
+    }
+
+    /* Add Animation */
+    @-webkit-keyframes animatetop {
+        from {top:-300px; opacity:0} 
+        to {top:0; opacity:1}
+    }
+
+    @keyframes animatetop {
+        from {top:-300px; opacity:0}
+        to {top:0; opacity:1}
+    }
+
+    /* The Close Button */
+    .close {
+        color: white;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .modal-header {
+        padding: 10px;
+        background-color: white;
+        color: black;
+        font-size: 30px;
+    }
+
+    .modal-body { padding: 2px 16px; }
+
+    .modal-footer {
+        padding: 2px 16px;
+        background-color: #5cb85c;
+        color: white;
+    }
+
+    
+</style>
+</head>
+
+<body>
+    <div id="loader" class="is-hide mt-[25%] ml-[50%]" >
+        <div class="loader"></div>
+        <div>Loading Model</div>
+    </div>
+    <div id="mainContent" class="is-hide">
+        <div class="ml-4 mt-4 mb-4 mr-4 flex">
+            <div class ="flex mr-4">
+                <div>
+                    <h1 class="ml-4">Tabel Hasil Identifikasi EEG</h1cl>
+                        <div id="table">
+                            <table>
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="px-4 py-2 w-[225px]">Waktu</th>
+                                        <th class="px-4 py-2 w-[225px]" >Hasil </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="isiEeg">
+                                </tbody>
+                            </table>
+                        </div>
+                </div>
+            </div> 
+            <div>
+                <div class="control">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mt-6 mr-6 " id="startAndStop">Mulai</button>
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mt-6 " id="inputdiagnosa"> Input Diagnosa</button>
+                </div>
+                
+                <!-- </div> -->
+                <div id="output" class="caption"></div>
+                <div id="analizing" class="caption"></div>
+            </div>
+        </div>
+        <div class="flex">
+            <div class="mt-12 mr-4">
+                <h1 class="ml-4">Data EEG</h1cl>
+                <canvas id="myChart" class="mr-2"></canvas>
+            </div>
+            
+        </div>
+        <div class="flex mt-2">
+            <!-- <div class="">
+                <h1 class="ml-4">Hasil Identifikasi</h1cl>
+                <canvas id="historyChart" class="mr-2"></canvas>
+            </div> -->
+            
+        </div>
+        </div>
+
+<!-- start modal here  -->
+<!-- The Modal -->
+<!-- Modal content -->
+<!-- The Modal -->
+<div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <div class="modal-header pa-4 text-center">
+            <span class="close">&times;</span>
+            <h2 class="ma-2">Input Diagnosa Tidur</h2>
+        </div>
+        <div class="modal-body row">
+            <p>Silahkan masukan hasil diagnosa:</p>
+            <div>
+                <textarea id="txtdiagnosa" class="border black mb-2" name="w3review" rows="4" cols="103"></textarea>
+            </div>  
+            <div class="text-center">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4" id="simpandandownload">Simpan & Download</button>
+            </div>
+        </div>
+        
+    </div>
+
+    </div>
+<!-- end modal here -->
+
+<script src="./Video Capture Example_files/adapter-5.0.4.js" type="text/javascript"></script>
+<script src="./Video Capture Example_files/utils.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+        let classOutput = document.getElementById('output')
+        let analizingOutput = document.getElementById('analizing')
+    // $(document).ready(function() {
+        var ctx = document.getElementById("myChart").getContext("2d");
+        // var ctxHistory = document.getElementById("historyChart").getContext("2d");
+
+        const defaultData = Array.from(Array(128).keys())
+        // const defaultDataHistory = [new Date().toLocaleTimeString()]
+
+        var chartData = {
+            labels: defaultData,
+            datasets: [{
+                label: "My First dataset",
+                fillColor: "transparent",
+                strokeColor: "blue",
+                pointColor: "transparent",
+                pointStrokeColor: "transparent",
+                pointHighlightFill: "transparent",
+                pointHighlightStroke: "transparent",
+                data: Array.from({length: 128}, () => Math.floor(Math.random()*(4210-4190+1)+4190)),
+            }]
+        };
+
+        var options = {
+            animation: false,
+            tooltips: {enabled: false},
+            events: [],
+            hover: {mode: null},
+            //Boolean - If we want to override with a hard coded scale
+            scaleOverride: false,
+            //** Required if scaleOverride is true **
+            //Number - The number of steps in a hard coded scale
+            scaleSteps: 10,
+            //Number - The value jump in the hard coded scale
+            scaleStepWidth: 10,
+            //Number - The scale starting value
+            scaleStartValue: 0,
+            responsive: false,
+            scales: {
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                        suggestedMax: 1,    // minimum will be 0, unless there is a lower value.
+                        // OR //
+                        beginAtZero: true   // minimum value will be 0.
+                    }
+                }]
+            }
+        };
+
+        var myLineChart = new Chart(ctx).Line(chartData, options);
+        // var myLineChart2 = new Chart(ctxHistory).Line(chartDataHistory, options);
+        let counter = chartData.datasets[0].data.length;
+        
+        // setInterval(function() {
+        
+        // }, 300);
+
+        function setLabels(labels) {
+            let length = chartData.datasets[0].data.length;
+            var nextMonthIndex = months.indexOf(labels[labels.length - 1]) + 1;
+            var nextMonthName = length;
+            counter = counter + 1;
+
+            labels.push(counter);
+            // setTimeout(() => {
+            labels.shift();
+            // }, 3000);
+        }
+        var globalClass = ``;
+        function loadTableData(element,data) {
+            const table = document.getElementById(element);
+                let row = table.insertRow();
+                let date = row.insertCell(0);
+                date.innerHTML = new Date().toLocaleTimeString(); 
+                let code = row.insertCell(1);
+                code.innerHTML = data.result;
+                // let eeg = row.insertCell(2);
+                globalClass = `${globalClass}
+                ${date.innerHTML} : ${code.innerHTML}
+                `
+        }
+        
+        function setData(oldData, newData, isShift = true) {
+            oldData.push(newData);
+            // setTimeout(() => {
+            if (isShift) {
+                oldData.shift();
+            }
+            // }, 3000);
+        }
+        
+
+        var months = [];
+
+    // });
+    var loaderElement = document.getElementById("loader");
+    loaderElement.classList.remove("is-hide");
+    setTimeout(() => {
+        loaderElement.classList.add("is-hide");
+        var mainContentElement = document.getElementById("mainContent");
+        mainContentElement.classList.remove("is-hide");
+    }, 1500);
+    let model = null;
+    let testData = []
+    function getPredictedElement(items) {
+        return items[Math.floor(Math.random()*items.length)];
+    }
+    let streaming = false;
+    let startAndStop = document.getElementById('startAndStop');
+    let tmpInterval = null;
+    startAndStop.addEventListener('click', () => {
+        var socket = io("http://localhost:3000/");
+        // check if socket connected 
+        const isSocketConnected = socket.connected;
+        if(!isSocketConnected) {
+            alert("koneksi dengan device tidak ditemukan, silahkan hubungkan eeg terlebih dahulu");
+            return;
+        } 
+        socket.on('connect', function() {
+            console.log('connected');
+        });
+        if (!streaming) {
+            analizingOutput.textContent = "Analizing " + Math.floor((testData.length/300)* 100)  + "%"
+            streaming = true;
+            startAndStop.innerText = 'Stop';
+            try {
+                let totalDelay = 500;
+                socket.on('rawdata', function(data) {
+                    totalDelay = totalDelay + 500;
+                    setTimeout(() => {
+                        if (counter >= 128){
+                            counter = 0;
+                        }
+                        
+                        setData(chartData.datasets[0].data, data);
+                        // setLabels(chartData.labels);
+                        let myLineChart = new Chart(ctx).Line(chartData, options);
+                    }, totalDelay);
+                        
+                });
+                socket.on('connection', (socket) => {
+                    console.log('a user connected');
+                });
+                
+            } catch (error) {
+                console.log(error)
+            }
+        } else {
+            startAndStop.innerText = 'Mulai';
+            classOutput.textContent = ``
+            analizingOutput.textContent = ""
+            clearInterval(tmpInterval)
+            streaming = false;
+        }
+    });
+    // Get the modal
+    var modal = document.getElementById("myModal");
+
+    // Get the button that opens the modal
+    var btn = document.getElementById("inputdiagnosa");
+    var simpan = document.getElementById("simpandandownload");
+    var txtdiagnosa = document.getElementById("txtdiagnosa");
+    
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks the button, open the modal 
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+    simpan.onclick = function() {
+        console.log(txtdiagnosa.value)
+        const textValue = `
+            Hasil identifikasi Video:
+            ${globalClass}
+
+            ----------------------------
+            Dengan Hasil diagnosa: 
+            ${txtdiagnosa.value}
+        `
+        let a = document.createElement('a');
+        a.href = "data:application/octet-stream,"+encodeURIComponent(textValue);
+        a.download = 'HasilAnalisaEEG.txt';
+        a.click();
+        modal.style.display = "none";
+    }
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+</script>
+
+
+</body>
+</html>

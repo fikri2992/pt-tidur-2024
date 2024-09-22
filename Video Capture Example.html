@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!-- saved from url=(0049)https://docs.opencv.org/3.4/js_video_display.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Video Capture Example</title>
+<link href="./Video Capture Example_files/js_example_style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>Video Capture Example</h2>
+<p>
+    Click <b>Start/Stop</b> button to start or stop the camera capture.<br>
+    The <b>videoInput</b> is a &lt;video&gt; element used as OpenCV.js input.
+    The <b>canvasOutput</b> is a &lt;canvas&gt; element used as OpenCv.js output.<br>
+    The code of &lt;textarea&gt; will be executed when video is started.
+    You can modify the code to investigate more.
+</p>
+<div>
+<div class="control"><button id="startAndStop">Start</button></div>
+<textarea class="code" rows="29" cols="100" id="codeEditor" spellcheck="false"></textarea>
+</div>
+<p class="err" id="errorMessage"></p>
+<div>
+    <table cellpadding="0" cellspacing="0" width="0" border="0">
+    <tbody><tr>
+        <td>
+            <video id="videoInput" width="320" height="240"></video>
+        </td>
+        <td>
+            <canvas id="canvasOutput" width="320" height="240"></canvas>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            <div class="caption">videoInput</div>
+        </td>
+        <td>
+            <div class="caption">canvasOutput</div>
+        </td>
+        <td></td>
+        <td></td>
+    </tr>
+    </tbody></table>
+</div>
+<script async="" type="text/javascript" src="./Video Capture Example_files/opencv.js"></script>
+<script src="./Video Capture Example_files/adapter-5.0.4.js" type="text/javascript"></script>
+<script src="./Video Capture Example_files/utils.js" type="text/javascript"></script>
+<script id="codeSnippet" type="text/code-snippet">
+    let video = document.getElementById('videoInput');
+    let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+    let dst = new cv.Mat(video.height, video.width, cv.CV_8UC1);
+    let cap = new cv.VideoCapture(video);
+    
+    const FPS = 30;
+    function processVideo() {
+        try {
+            if (!streaming) {
+                // clean and stop.
+                src.delete();
+                dst.delete();
+                return;
+            }
+            let begin = Date.now();
+            // start processing.
+            cap.read(src);
+            cv.cvtColor(src, dst, cv.COLOR_RGBA2mRGBA);
+    
+    let gray = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+    let faces = new cv.RectVector();
+    let eyes = new cv.RectVector();
+    let faceCascade = new cv.CascadeClassifier();
+    let eyeCascade = new cv.CascadeClassifier();
+    // load pre-trained classifiers
+    faceCascade.load('./Video Capture Example_files/haarcascade_frontalface_default.xml');
+    eyeCascade.load('./Video Capture Example_files/haarcascade_eye.xml');
+    // detect faces
+    let msize = new cv.Size(0, 0);
+    faceCascade.detectMultiScale(gray, faces, 1.1, 3, 0, msize, msize);
+    for (let i = 0; i < faces.size(); ++i) {
+        let roiGray = gray.roi(faces.get(i));
+        let roiSrc = src.roi(faces.get(i));
+        let point1 = new cv.Point(faces.get(i).x, faces.get(i).y);
+        let point2 = new cv.Point(faces.get(i).x + faces.get(i).width,
+                                  faces.get(i).y + faces.get(i).height);
+        cv.rectangle(src, point1, point2, [255, 0, 0, 255]);
+        // detect eyes in face ROI
+        eyeCascade.detectMultiScale(roiGray, eyes);
+        for (let j = 0; j < eyes.size(); ++j) {
+            let point1 = new cv.Point(eyes.get(j).x, eyes.get(j).y);
+            let point2 = new cv.Point(eyes.get(j).x + eyes.get(j).width,
+                                      eyes.get(j).y + eyes.get(j).height);
+            cv.rectangle(roiSrc, point1, point2, [0, 0, 255, 255]);
+        }
+        roiGray.delete(); roiSrc.delete();
+    }
+    cv.imshow('canvasOutput', dst);
+    
+            // schedule the next one.
+            let delay = 1000/FPS - (Date.now() - begin);
+            setTimeout(processVideo, delay);
+        } catch (err) {
+            utils.printError(err);
+        }
+    };
+    
+    // schedule the first one.
+    setTimeout(processVideo, 0);
+    
+</script>
+<script type="text/javascript">
+let utils = new Utils('errorMessage');
+
+utils.loadCode('codeSnippet', 'codeEditor');
+
+let streaming = false;
+let videoInput = document.getElementById('videoInput');
+let startAndStop = document.getElementById('startAndStop');
+let canvasOutput = document.getElementById('canvasOutput');
+let canvasContext = canvasOutput.getContext('2d');
+
+startAndStop.addEventListener('click', () => {
+    if (!streaming) {
+        utils.clearError();
+        utils.startCamera('qvga', onVideoStarted, 'videoInput');
+    } else {
+        utils.stopCamera();
+        onVideoStopped();
+    }
+});
+
+function onVideoStarted() {
+    streaming = true;
+    startAndStop.innerText = 'Stop';
+    videoInput.width = videoInput.videoWidth;
+    videoInput.height = videoInput.videoHeight;
+    utils.executeCode('codeEditor');
+}
+
+function onVideoStopped() {
+    streaming = false;
+    canvasContext.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+    startAndStop.innerText = 'Start';
+}
+
+
+utils.loadOpenCv(() => {
+    let eyeCascadeFile = 'haarcascade_eye.xml';
+    utils.createFileFromUrl(eyeCascadeFile, "http://localhost/video/js/haarcascade_eye.xml", () => {
+        let faceCascadeFile = 'haarcascade_frontalface_default.xml';
+        utils.createFileFromUrl(faceCascadeFile, "http://localhost/video/js/haarcascade_frontalface_default.xml", () => {
+            tryIt.removeAttribute('disabled');
+        });
+    });
+});
+</script>
+
+
+</body></html>
