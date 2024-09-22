@@ -1,0 +1,477 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src="https://cdn.tailwindcss.com"></script>
+<title>Analisa tidur Ver. 0.0.5</title>
+<link href="./Video Capture Example_files/js_example_style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+<script src="https://cdn.socket.io/socket.io-2.2.0.js" ></script>
+
+
+<style>
+    .center {
+        margin: auto;
+        width: 60%;
+        padding: 10px;
+    }
+    .loader {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .is-hide{
+        display: none;
+    }
+    #myChart {
+        width: 1822px !important;
+        height: 300px !important;
+    }
+    #historyChart {
+        width: 900px !important;
+        height: 300px !important;
+    }
+
+    #table {
+        width: 340px;
+        height: 220px;
+        overflow: auto;
+        border: 1px solid black;
+    }
+    #table td {
+        border-left: 1px solid #000;
+        border-right: 1px solid #000;
+        border-bottom: 1px solid black;
+        border-top: 1px solid black;
+
+    }
+    #table td:first-child {
+        border-left: none;
+    }
+
+    #table td:last-child {
+        border-right: none;
+    }
+    #table th {
+        position: sticky;
+        top: 0px!important;
+        --tw-bg-opacity: 1;
+        background: rgb(243 244 246 / var(--tw-bg-opacity));
+
+    }
+
+    #table thead tr th {
+        /* Don't forget this, required for the stickiness */
+        top: 0;
+    }
+
+    #table tbody tr th {
+        /* Don't forget this, required for the stickiness */
+        top: 1.5em;
+    }
+    
+    /* The Modal (background) */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 100px; /* Location of the box */
+        left: 25%;
+        top: 0;
+        width: 50%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+    }
+
+    /* Modal Content */
+    .modal-content {
+        position: relative;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 0;
+        border: 1px solid #888;
+        width: 80%;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+        -webkit-animation-name: animatetop;
+        -webkit-animation-duration: 0.4s;
+        animation-name: animatetop;
+        animation-duration: 0.4s
+    }
+
+    /* Add Animation */
+    @-webkit-keyframes animatetop {
+        from {top:-300px; opacity:0} 
+        to {top:0; opacity:1}
+    }
+
+    @keyframes animatetop {
+        from {top:-300px; opacity:0}
+        to {top:0; opacity:1}
+    }
+
+    /* The Close Button */
+    .close {
+        color: white;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .modal-header {
+        padding: 10px;
+        background-color: white;
+        color: black;
+        font-size: 30px;
+    }
+
+    .modal-body { padding: 2px 16px; }
+
+    .modal-footer {
+        padding: 2px 16px;
+        background-color: #5cb85c;
+        color: white;
+    }
+
+    
+</style>
+</head>
+
+<body>
+    <div id="loader" class="is-hide mt-[25%] ml-[50%]" >
+        <div class="loader"></div>
+        <div>Loading Model</div>
+    </div>
+    <div id="mainContent" class="is-hide">
+        <div class="ml-4 mt-4 mb-4 mr-4 flex">
+            <div class="mr-4">
+                <video id="videoInput" style="display:none" width="320" height="240"></video>
+                <canvas id="canvasOutput" width="320" height="240"></canvas>
+            </div>
+            
+            <div class ="flex mr-4">
+                <div>
+                    <h1 class="ml-4">Tabel Hasil Identifikasi Video</h1cl>
+                        <div id="table">
+                            <table>
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="px-4 py-2 w-[225px]">Waktu</th>
+                                        <th class="px-4 py-2 w-[225px]" >Hasil</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="isiHasil">
+                                </tbody>
+                            </table>
+                        </div>
+                </div>
+            </div> 
+            <div>
+                <div class="control">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mt-6 mr-6 " id="startAndStop">Mulai</button>
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mt-6 " id="inputdiagnosa"> Input Diagnosa</button>
+                </div>
+                
+                <!-- </div> -->
+                <div id="output" class="caption"></div>
+                <div id="analizing" class="caption"></div>
+            </div>
+        </div>
+        <div class="flex">
+            <div class="mt-12 mr-4">
+                <!-- <canvas id="myChart" class="mr-2"></canvas> -->
+            </div>
+            
+        </div>
+        <div class="flex mt-2">
+            <!-- <div class="">
+                <h1 class="ml-4">Hasil Identifikasi</h1cl>
+                <canvas id="historyChart" class="mr-2"></canvas>
+            </div> -->
+            
+        </div>
+        </div>
+<!-- start modal here  -->
+<!-- The Modal -->
+<!-- Modal content -->
+<!-- The Modal -->
+<div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <div class="modal-header pa-4 text-center">
+            <span class="close">&times;</span>
+            <h2 class="ma-2">Input Diagnosa Tidur</h2>
+        </div>
+        <div class="modal-body row">
+            <p>Silahkan masukan hasil diagnosa:</p>
+            <div>
+                <textarea id="txtdiagnosa" class="border black mb-2" name="w3review" rows="4" cols="103"></textarea>
+            </div>  
+            <div class="text-center">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mb-4" id="simpandandownload">Simpan & Download</button>
+            </div>
+        </div>
+        
+    </div>
+
+    </div>
+<!-- end modal here -->
+<script src="./Video Capture Example_files/adapter-5.0.4.js" type="text/javascript"></script>
+<script src="./Video Capture Example_files/utils.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+    let classOutput = document.getElementById('output')
+    let analizingOutput = document.getElementById('analizing')
+    var loaderElement = document.getElementById("loader");
+    loaderElement.classList.remove("is-hide");
+    
+    var inputdiagnosa = document.getElementById("inputdiagnosa");
+    let model = null;
+    let testData = []
+    var globalClass = ``;
+    function random(arr){
+        return Math.floor(Math.random()*(4210-4190+1)+4190);;
+    }
+    function loadTableData(element, data) {
+        const table = document.getElementById(element);
+        let row = table.insertRow();
+        let date = row.insertCell(0);
+        date.innerHTML = new Date().toLocaleTimeString(); 
+        let code = row.insertCell(1);
+        code.innerHTML = data.result;
+        globalClass = `${globalClass}
+        ${date.innerHTML} : ${code.innerHTML}
+        `
+    }
+    function randomElement(items) {
+        console.log(items)
+        return items[Math.floor(Math.random()*items.length)];
+    }
+    async function loadModel() {
+            model = await tf.loadLayersModel("http://localhost/video/model.json");
+            console.log("model loaded")
+            let utils = new Utils('errorMessage');
+            let streaming = false;
+            utils.loadOpenCv(() => {
+                let eyeCascadeFile = 'haarcascade_eye.xml';
+                utils.createFileFromUrl(eyeCascadeFile, "http://localhost/video/js/haarcascade_eye.xml", () => {
+                    let faceCascadeFile = 'haarcascade_frontalface_default.xml';
+                    utils.createFileFromUrl(faceCascadeFile, "http://localhost/video/js/haarcascade_frontalface_default.xml", () => {
+                        loaderElement.classList.add("is-hide");
+                        var mainContentElement = document.getElementById("mainContent");
+                        mainContentElement.classList.remove("is-hide");
+                    });
+                })
+                
+                let videoInput = document.getElementById('videoInput');
+                let startAndStop = document.getElementById('startAndStop');
+                let canvasOutput = document.getElementById('canvasOutput');
+                let canvasContext = canvasOutput.getContext('2d');
+                
+                startAndStop.addEventListener('click', () => {
+                    if (!streaming) {
+                        utils.startCamera('qvga', onVideoStarted, 'videoInput');
+                    } else {
+                        utils.stopCamera();
+                        onVideoStopped();
+                    }
+                });
+                const FPS = 30;
+                const indexOfMax = (arr) => {
+                    if (arr.length === 0) {
+                        return -1;
+                    }
+
+                    var max = arr[0];
+                    var maxIndex = 0;
+
+                    for (var i = 1; i < arr.length; i++) {
+                        if (arr[i] > max) {
+                            maxIndex = i;
+                            max = arr[i];
+                        }
+                    }
+
+                    return maxIndex;
+                }
+                function isOdd(x) { return x & 1; };
+                let countInter = 0;
+                function processVideo() {
+                    try {
+                        let video = document.getElementById('videoInput');
+                        let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+                        
+
+                        let cap = new cv.VideoCapture(video);
+                        if (!streaming) {
+                            // clean and stop.
+                            src.delete();
+                            return;
+                        }
+
+                        let begin = Date.now();
+                        // start processing.
+                        cap.read(src);
+                
+                        let gray = new cv.Mat();
+                        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+                        let faces = new cv.RectVector();
+                        let eyes = new cv.RectVector();
+                        let faceCascade = new cv.CascadeClassifier();
+                        let eyeCascade = new cv.CascadeClassifier();
+                        // load pre-trained classifiers
+                        faceCascade.load('haarcascade_frontalface_default.xml');
+                        eyeCascade.load('haarcascade_eye.xml');
+                        // detect faces
+                        // detect faces
+                        let msize = new cv.Size(0, 0);
+                        faceCascade.detectMultiScale(gray, faces, 1.1, 3, 0, msize, msize);
+                        if (faces.size() <= 0) analizingOutput.textContent = "No Face Detected"
+                        for (let i = 0; i < faces.size(); ++i) {
+                            analizingOutput.textContent = "Analizing " + Math.floor((testData.length/900)* 100)  + "%"
+                            let roiGray = gray.roi(faces.get(i));
+                            let roiSrc = src.roi(faces.get(i));
+                            let point1 = new cv.Point(faces.get(i).x, faces.get(i).y);
+                            let point2 = new cv.Point(faces.get(i).x + faces.get(i).width,
+                                                    faces.get(i).y + faces.get(i).height);
+                            cv.rectangle(src, point1, point2, [255, 0, 0, 255]);
+                            testData.push(faces.get(i).x - 0, faces.get(i).y - 0)
+                            if ((testData.length) === 900) {
+                                countInter = countInter + 1;
+                                analizingOutput.textContent = "Processing..."
+                                const output = model.predict(tf.tensor([[testData]]));
+                                const outputData = output.dataSync();
+                                const index = indexOfMax(outputData)
+                                // const index =1
+                                let className = ''
+                                let sleepStage = ''
+                                // const stageElement = ['N1', 'N2', 'N3', 'REM']
+                                if (index === 0) {
+                                    classOutput.textContent = 'Central Sleep Apnea'
+                                    className = 'Central Sleep Apnea'
+                                }
+                                if (index === 2) {
+                                    classOutput.textContent = 'Obstructive Sleep Apnea'
+                                    className = 'Obstructive Sleep Apnea'
+                                }
+                                if (index === 1) {
+                                    classOutput.textContent = 'No Apnea'
+                                    className = 'No Apnea'
+                                } 
+                                classOutput.textContent = `Detected Class: ${className}`
+                                // console.log("hasil", className,  sleepStage)
+                                loadTableData('isiHasil', { result: className})
+                                testData.splice(0, 400);
+                            }
+
+                            roiGray.delete(); roiSrc.delete();
+                        }
+                        cv.imshow('canvasOutput', src);
+                        src.delete(); 
+                        gray.delete(); 
+                        faceCascade.delete();
+                        eyeCascade.delete(); 
+                        faces.delete(); 
+                        eyes.delete();
+
+                        // schedule the next one.
+                        let delay = 1000/FPS - (Date.now() - begin);
+                        console.log(delay)
+                        setTimeout(processVideo, 0);
+                    } catch (err) {
+                        console.log(err)
+                        // utils.printError(err);
+                    }
+                };
+
+                // main method
+                function onVideoStarted() {
+                    streaming = true;
+                    startAndStop.innerText = 'Stop';
+                    videoInput.width = videoInput.videoWidth;
+                    videoInput.height = videoInput.videoHeight;
+                    testData = []
+                    // schedule the first one.
+                    setTimeout(processVideo, 0);
+                    
+                
+                }
+                
+                function onVideoStopped() {
+                    startAndStop.innerText = 'Start';
+                    streaming = false;
+                    canvasContext.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+                    classOutput.textContent = ""
+                    analizingOutput.textContent = ""
+                }
+                
+        });
+    }
+    loadModel();
+    
+    // Get the modal
+    var modal = document.getElementById("myModal");
+
+    // Get the button that opens the modal
+    var btn = document.getElementById("inputdiagnosa");
+    var simpan = document.getElementById("simpandandownload");
+    var txtdiagnosa = document.getElementById("txtdiagnosa");
+    
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks the button, open the modal 
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+    simpan.onclick = function() {
+        console.log(txtdiagnosa.value)
+        const textValue = `
+            Hasil identifikasi Video:
+            ${globalClass}
+
+            ----------------------------
+            Dengan Hasil diagnosa: 
+            ${txtdiagnosa.value}
+        `
+        let a = document.createElement('a');
+        a.href = "data:application/octet-stream,"+encodeURIComponent(textValue);
+        a.download = 'HasilAnalisaVideo.txt';
+        a.click();
+        modal.style.display = "none";
+    }
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+</script>
+
+
+</body>
+</html>
