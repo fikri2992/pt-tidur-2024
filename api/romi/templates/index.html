@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!-- Website - www.codingnepalweb.com -->
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Identifikasi Sleep Apnea</title>
+    <link rel="stylesheet" href="static/css/style.css" />
+
+    <!-- Boxicons CDN Link -->
+    <link href="https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="sidebar open">
+      <div class="logo-details">
+        <div class="logo_name">Sleep Apnea</div>
+        <i class="bx bx-menu" id="btn"></i>
+      </div>
+      <ul class="nav-list">
+        <li id="aktif">
+          <a href="{{ url_for('index') }}">
+            <i class="bx bx-grid-alt"></i>
+            <span class="links_name">Beranda</span>
+          </a>
+          <span class="tooltip">Beranda</span>
+        </li>
+        <li>
+            <a href="{{ url_for('petunjuk') }}">
+            <i class="bx bx-chat"></i>
+            <span class="links_name">Petunjuk</span>
+          </a>
+          <span class="tooltip">Petunjuk</span>
+        </li>
+        <li>
+          <a href="{{ url_for('identifikasi') }}">
+            <i class="bx bx-pie-chart-alt"></i>
+            <span class="links_name">Identifikasi</span>
+          </a>
+          <span class="tooltip">Identifikasi Sleep Apnea</span>
+        </li>
+        
+      </ul>
+    </div>
+    <section class="home-section">
+      <div class="text"><h1><b>BERANDA</b></h1></div>
+      <div class="row">
+        <div class="col-lg-12 grid-margin stretch-card">
+          <div class="row flex-grow">
+            <div class="col grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body text">
+                      <h5 style="text-align: center"> IDENTIFIKASI SLEEP APNEA DARI SINYAL ELEKTROENSEFALOGRAM MENGGUNAKAN CONVOLUTIONAL NEURAL NETWORK DAN GATED RECURRENT UNIT </h5>
+                      <img style="display: block; margin-left: auto; margin-right: auto; width: 225px; height: 225px;" src="static/images/unjani.png">
+                      <h5 style="text-align: center"> ROMY SYAPUTRA WIJAYA </h5>
+                      <h5 style="text-align: center"> 3411201111</h5>
+                    </div>
+
+                    <div>  
+                        <div class="lside">     
+                            <h5 style="text-align: center">Pembimbing 1</h5>
+                            <br><br><br><br>
+                            <h5 style="text-align: center">Dr. Esmeralda C. Djamal, S.T., M.T.</h5>
+                            <h5 style="text-align: center">NID. 4121.276.70</h5>   
+                        </div>  
+                        <!-- side -->  
+                        <div class="rside">  
+                            <h5 style="text-align: center">Pembimbing 2</h5>
+                            <br><br><br><br>
+                            <h5 style="text-align: center">Fatan Kasyidi, S.Kom., M.T.</h5>
+                            <h5 style="text-align: center">NID. 4121.009.92</h5>
+                            <h5 style="text-align: center"> </h5>   
+                        </div>  
+                        </div>  
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script src="static/js/script.js"></script>
+  </body>
+</html>
