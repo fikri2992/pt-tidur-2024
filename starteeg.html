@@ -167,8 +167,9 @@
                             <table>
                                 <thead>
                                     <tr class="bg-gray-100">
+                                        <th class="px-4 py-2 w-[225px]">Model</th> <!-- New Model Column -->
                                         <th class="px-4 py-2 w-[225px]">Waktu</th>
-                                        <th class="px-4 py-2 w-[225px]" >Hasil </th>
+                                        <th class="px-4 py-2 w-[225px]">Hasil</th>
                                     </tr>
                                 </thead>
                                 <tbody id="isiEeg">
@@ -306,17 +307,18 @@
             // }, 3000);
         }
         var globalClass = ``;
-        function loadTableData(element,data) {
+        function loadTableData(element, data) {
             const table = document.getElementById(element);
-                let row = table.insertRow();
-                let date = row.insertCell(0);
-                date.innerHTML = new Date().toLocaleTimeString(); 
-                let code = row.insertCell(1);
-                code.innerHTML = data.result;
-                // let eeg = row.insertCell(2);
-                globalClass = `${globalClass}
-                ${date.innerHTML} : ${code.innerHTML}
-                `
+            let row = table.insertRow();
+            let model = row.insertCell(0); // New Model Cell
+            model.innerHTML = data.model; // Assuming `data.model` contains the model information
+            let date = row.insertCell(1);
+            date.innerHTML = new Date().toLocaleTimeString(); 
+            let code = row.insertCell(2);
+            code.innerHTML = data.result;
+
+            // Update globalClass string for use in diagnostic results
+            globalClass = `${globalClass} ${model.innerHTML} : ${date.innerHTML} : ${code.innerHTML}\n`
         }
         
         function setData(oldData, newData, isShift = true) {
