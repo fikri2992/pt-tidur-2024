@@ -121,3 +121,61 @@ class Library:
                 return "Tidak Ada Apnea (No-Apnea)"
             else:
                 return "Coba Kembali"
+
+
+    def predict(self, model, dataTest):
+        # Log the original shape and size of dataTest
+        self.log("Original dataTest shape: " + str(dataTest.shape))
+        self.log("Original dataTest size: " + str(dataTest.size))
+
+
+        if self.var == "sleepapnea":
+            # Log the original shape and size of dataTest
+            self.log("Original dataTest shape: " + str(dataTest.shape))
+            self.log("Original dataTest size: " + str(dataTest.size))
+
+            # Specify the required input size for your model
+            required_size = 444  # Change this if your model expects a different input size
+
+            # Adjust dataTest to match the required size
+            if dataTest.size > required_size:
+                # Truncate dataTest
+                dataTest_adjusted = dataTest[:required_size]
+                self.log(f"dataTest truncated to {required_size} elements.")
+            elif dataTest.size < required_size:
+                # Pad dataTest with zeros
+                padding = np.zeros(required_size - dataTest.size)
+                dataTest_adjusted = np.concatenate((dataTest, padding))
+                self.log(f"dataTest padded to {required_size} elements.")
+            else:
+                dataTest_adjusted = dataTest
+                self.log("dataTest size matches the required size.")
+
+            # Reshape dataTest_adjusted
+            dataUji = dataTest_adjusted.reshape(1, 1, required_size)
+            self.log("dataUji shape after reshaping: " + str(dataUji.shape))
+
+            # Make the prediction
+            result = model.predict(dataUji)
+            return result
+            
+    def translate(self, result):
+            y = np.argmax(result, axis=-1)
+            self.log(f"Prediction Result {str(y)} detail: {result}")
+            # self.log("Prediction Result: " + str(y)) + " detail: "  + result
+
+            label = ""
+
+            for idx in y:
+                label = idx
+
+            if self.var == "sleepapnea":
+                if label == 0:
+                    return "Obstructive Sleep Apnea (OSA)"
+                elif label == 1:
+                    return "Central Sleep Apnea (CSA)"
+                elif label == 2:
+                    return "Tidak Ada Apnea (No-Apnea)"
+                else:
+                    return "Coba Kembali"
+
