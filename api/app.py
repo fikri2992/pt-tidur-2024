@@ -19,7 +19,7 @@ class CustomGRU(GRU):
         super().__init__(*args, **kwargs)
 
 # Load your model with Orthogonal initializer and Custom GRU
-model = load_model('C:\\xampp\\htdocs\\PTTidur2024\\api\\model_C4_M1.h5', custom_objects={'Orthogonal': Orthogonal, 'GRU': CustomGRU})
+model = load_model('C:\\xampp\\htdocs\\pt-tidur-2024\\api\\model_C4_M1.h5', custom_objects={'Orthogonal': Orthogonal, 'GRU': CustomGRU})
 #add api to check length of file uploaded 
 @app.route('/check_file_length', methods=['POST'])
 def check_file_length():

@@ -424,15 +424,15 @@
             }
             
 
-            model = await tf.loadLayersModel("http://localhost/PTTIDUR2024/model.json");
+            model = await tf.loadLayersModel("http://localhost/pt-tidur-2024/model.json");
             console.log("model loaded")
             let utils = new Utils('errorMessage');
             let streaming = false;
             utils.loadOpenCv(() => {
                 let eyeCascadeFile = 'haarcascade_eye.xml';
-                utils.createFileFromUrl(eyeCascadeFile, "http://localhost/PTTIDUR2024/js/haarcascade_eye.xml", () => {
+                utils.createFileFromUrl(eyeCascadeFile, "http://localhost/pt-tidur-2024/js/haarcascade_eye.xml", () => {
                     let faceCascadeFile = 'haarcascade_frontalface_default.xml';
-                    utils.createFileFromUrl(faceCascadeFile, "http://localhost/PTTIDUR2024/js/haarcascade_frontalface_default.xml", () => {
+                    utils.createFileFromUrl(faceCascadeFile, "http://localhost/pt-tidur-2024/js/haarcascade_frontalface_default.xml", () => {
                         loaderElement.classList.add("is-hide");
                         var mainContentElement = document.getElementById("mainContent");
                         mainContentElement.classList.remove("is-hide");
