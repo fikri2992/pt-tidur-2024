@@ -221,8 +221,6 @@ class Cortex {
         })
     }
 
-
-
     stopRecord(authToken, sessionId, recordName) {
         let socket = this.socket
         const STOP_RECORD_REQUEST_ID = 12
@@ -521,7 +519,6 @@ class Cortex {
         })
     }
 
-
     /**
      *  - handle send training request
      *  - handle resolve for two difference status : start and accept
@@ -731,7 +728,7 @@ server.listen(3000, () => {
 const eegArr = [4200.769, 4195.385, 4191.795, 4194.615, 4192.436, 4194.231, 4197.051, 4195.385, 4194.487, 4194.744, 4195.897, 4195.385, 4193.718, 4194.872, 4198.846, 4195.897, 4196.026, 4204.359, 4202.692, 4194.359, 4193.846, 4197.564, 4197.821, 4198.205, 4196.41, 4193.974, 4197.949, 4196.41, 4192.436, 4192.821, 4192.436, 4192.949, 4193.846, 4191.026, 4195.513, 4202.692, 4197.564, 4197.051, 4201.41, 4200.128, 4201.026, 4200.256, 4198.077, 4200.385, 4200.641, 4195.256, 4195.641, 4202.308, 4202.564, 4198.974, 4200.128, 4201.282, 4199.744, 4198.205, 4199.231, 4202.308, 4200.769, 4198.333, 4200.385, 4201.41, 4200.128, 4200, 4200.385, 4200.897, 4201.026, 4200, 4200.385, 4202.949, 4202.949, 4202.179, 4203.333, 4202.179, 4201.282, 4202.436, 4201.154, 4199.872, 4201.282, 4202.564, 4202.821, 4200.769, 4198.718, 4200.513, 4203.205, 4202.179, 4199.487, 4199.359, 4201.282, 4202.051, 4200, 4199.359, 4200.769, 4201.282, 4199.872, 4198.846, 4200.641, 4201.538, 4198.974, 4197.436, 4199.487, 4200, 4198.333, 4198.846, 4201.795, 4201.41, 4199.615, 4200.256, 4200.256, 4201.026, 4201.923, 4200.897, 4199.744, 4200.513, 4200.385, 4200, 4200.897, 4200.513, 4200.385, 4201.154, 4201.026, 4200.385, 4201.154, 4200.641, 4197.564, 4198.718, 4201.795, 4201.154, 4201.154, 4202.692]
 
 function random(arr) {
-    return Math.floor(Math.random() * (4210 - 4190 + 1) + 4190);;
+    return Math.floor(Math.random() * (4210 - 4190 + 1) + 4190);
 }
 
 //socket.io instantiation
@@ -739,10 +736,10 @@ const io = require("socket.io")(server)
 
 //listen on every connection
 io.on('connection', (socket) => {
-    //     //add function to receive and emit response
-    let c = new Cortex(user, socketUrl)
-    let streams = ['eeg']
-    c.subRealtime(streams, socket)
+    //     //add function to receive and emit response  
+    // let c = new Cortex(user, socketUrl)
+    // let streams = ['eeg']
+    // c.subRealtime(streams, socket)
 
     console.log("New client connected")
 })
@@ -754,28 +751,28 @@ setInterval(() => {
     eegData.push(newData);
 
     // Emit eeg_raw event every 128 data points
-    if (eegData.length % 128 === 0) {
+    // if (eegData.length % 128 === 0) {
         io.emit('eeg_raw', eegData.slice(-128));
-    }
+    // }
 
-    if (eegData.length === 6000) {
-        // Send data to the API endpoint
-        const jsondata = JSON.stringify(eegData);
-        fetch('http://localhost:5000/predict', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: jsondata
-        })
-        .then(response => response.json())
-        .then(result => {
-            // Emit the result to the socket
-            io.emit('model_result', result);
-            eegData = [];
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            eegData = [];
-        });    }
-}, 10);
+    // if (eegData.length === 6000) {
+    //     // Send data to the API endpoint
+    //     const jsondata = JSON.stringify(eegData);
+    //     fetch('http://localhost:5000/predict', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: jsondata
+    //     })
+    //     .then(response => response.json())
+    //     .then(result => {
+    //         // Emit the result to the socket
+    //         io.emit('model_result', result);
+    //         eegData = [];
+    //     })
+    //     .catch(error => {
+    //         console.error('Error:', error);
+    //         eegData = [];
+    //     });    }
+}, 1000);
